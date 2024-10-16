@@ -1,0 +1,60 @@
+name: run sooka
+on:
+  schedule:
+    - cron: '0 0,12 * * *'
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install cryptography
+
+      - name: Run updater script
+        run: |
+          python generate.py
+          
+      - name: Display account
+        run: |
+          cat account.txt
+
+      - name: Display bearer
+        run: |
+          cat bearer.txt
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Commit and push account changes
+        run: |
+          git add account.txt
+          git commit -m "Update new Account"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit and push bearer changes
+        run: |
+          git add bearer.txt
+          git commit -m "Update new JWT"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
